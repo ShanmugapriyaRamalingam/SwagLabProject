@@ -13,11 +13,29 @@ const config =  defineConfig({
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    browserName: 'chromium',
-    headless: false,
-    screenshot:'on'
+    screenshot:'on',
+    trace: 'on-first-retry'
     // trace: 'on-first-retry',
-  }
+  },
+  /* Configure projects for major browsers */
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'],
+      headless: process.env.CI ? true : false
+      },
+    },
+
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    }
+  ]
 });
 
 module.exports = config;
