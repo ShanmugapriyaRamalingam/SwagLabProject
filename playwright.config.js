@@ -24,16 +24,6 @@ const config =  defineConfig({
       use: { ...devices['Desktop Chrome'],
       headless: process.env.CI ? true : false
       },
-    },
-
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
     }
   ]
 });

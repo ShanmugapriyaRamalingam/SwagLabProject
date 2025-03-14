@@ -10,69 +10,89 @@ class ProductsPage {
         this.checkoutPageTitle = page.locator('.title');
         this.cartItems = page.locator('.cart_item');
         this.continueShoppingLink = page.locator('#continue-shopping');
+        this.removedItems = 0;
     }
 
-    async handleItems(products, action) {
-        for (const productName of products) {
-            const productCount = await this.productsItem.count();
-            for (let i = 0; i < productCount; i++) {
-                const productTitle = await this.productsItem.nth(i).locator('.inventory_item_name').textContent();
-                if (productTitle.trim() === productName) {
-                    if (action === 'select') {
-                        await this.productsItem.nth(i).locator('text=Add to cart').click();
-                        const removeButton = this.productsItem.nth(i).locator('text=Remove');
-                        console.log("Product - " + productName + " added to cart");
-                        await removeButton.waitFor({ state: 'visible' });
-                    } else if (action === 'remove') {
-                        await this.productsItem.nth(i).locator('text=Remove').click();
-                        const addToCartButton = this.productsItem.nth(i).locator('text=Add to cart');
-                        await addToCartButton.waitFor({ state: 'visible' });
-                        await expect(addToCartButton).toBeVisible();
-                        console.log("Product - " + productName + " removed from cart");
-                    }else if(action === 'verify'){
-                        const removeButton = this.productsItem.nth(i).locator('text=Remove');
-                        await expect(removeButton).toBeVisible();
+    async setCount(count) {
+        this.count = count;
+    }    
+
+    async clickElement(locator) {
+        await locator.click();
+    }
+
+    async getTextContent(locator) {
+        return await locator.textContent();
+    }        
+
+    async handleItems(action, itemsCount) {
+        const productCount = await this.productsItem.count();
+        for (let i = 0; i < productCount; i++) 
+            {   
+                const productName = await this.getTextContent(this.productsItem.nth(i).locator('.inventory_item_name'));
+                if(i===itemsCount){break;}
+                if (action === 'select') {
+                    await this.clickElement(this.productsItem.nth(i).locator('text=Add to cart'));
+                    const removeButton = this.productsItem.nth(i).locator('text=Remove');
+                    await expect(removeButton).toBeVisible();
+                    console.log(`Product "${productName}" is added to cart.`);
+                } else if (action === 'remove') {
+                    await this.clickElement(this.productsItem.nth(i).locator('text=Remove'));
+                    const addToCartButton = this.productsItem.nth(i).locator('text=Add to cart');
+                    await expect(addToCartButton).toBeVisible();
+                    console.log(`Product "${productName}" is removed from the cart.`);
+                }else if(action === 'verify'){
+                    let buttonName = 'text=Remove';
+                    if(this.removedItems > 0){                               
+                        buttonName = 'text=Add to cart';
+                        this.removedItems -= 1;
                     }
-                    break; 
-                }
+                    const verifyButton = await this.productsItem.nth(i).locator(buttonName);
+                    await expect(verifyButton).toBeVisible();
+                }   
             }
-        }
     }
 
-    async selectItems(products) {
-        await this.handleItems(products, 'select');
+    async selectItems() {
+        await this.handleItems('select', this.count);
     }
 
-    async removeItems(products) {
-        await this.handleItems(products, 'remove');
+    async removeItems(removalCount) {
+        await this.setCount(this.count - removalCount);
+        await this.handleItems('remove', removalCount);
+        console.log(`Removed ${removalCount} items from the cart.`);
+        this.removedItems = removalCount;
     }
     
-    async verifyCartItems(products) {
-        await this.handleItems(products, 'verify');
+    async verifyCartItems() {
+        await this.handleItems('verify', this.count);
     }
 
-    async navigateToCart(count) {
-        await this.shoppingCartLink.click();
-        const itemCount = await this.productCountInCart.textContent();
-        expect(parseInt(itemCount)).toBe(count);
+    async navigateToCart() {
+        await this.clickElement(this.shoppingCartLink);
+        await this.waitForElement(this.cartItems.first());
     }
 
     async verifyCount(count) {
         const itemCount = await this.productCountInCart.textContent();
-        expect(parseInt(itemCount)).toBe(count);
+        console.log(`There are ${parseInt(itemCount)} items in the cart.`);
+        expect(parseInt(itemCount)).toBe(this.count);
     }
 
-    async clickContinueShopping(products) {
-        await this.continueShoppingLink.click();
-        await this.page.waitForLoadState('networkidle');
-        await this.verifyCartItems(products);
+    async clickContinueShopping() {
+        await this.clickElement(this.continueShoppingLink);
+        await this.waitForElement(this.productsItem.first());
+        await this.verifyCartItems();
     }
 
     async checkOut() {
-        await this.checkoutButton.click();
-        await this.page.waitForLoadState('networkidle');
-        await this.checkoutPageTitle.waitFor({ state: 'visible' });
+        await this.clickElement(this.checkoutButton);
+        await this.waitForElement(this.checkoutPageTitle);
         await expect(this.checkoutPageTitle).toHaveText('Checkout: Your Information');
+    }
+
+    async waitForElement(locator) {
+        await locator.waitFor({ state: 'visible' });
     }
     
 }
