@@ -75,7 +75,7 @@ class ProductsPage {
 
     async verifyCount(count) {
         const itemCount = await this.productCountInCart.textContent();
-        console.log(`There are ${parseInt(itemCount)} items in the cart.`);
+        console.log(`Items count in the cart is - ${parseInt(itemCount)}.`);
         expect(parseInt(itemCount)).toBe(this.count);
     }
 

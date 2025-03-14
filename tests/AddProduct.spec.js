@@ -14,6 +14,7 @@ test("Add 5 products in a cart", async({page})=>{
     const productsPage = new ProductsPage(page);
     await productsPage.setCount(count);
     await productsPage.selectItems();
+    await productsPage.verifyCount();
     await productsPage.navigateToCart();
     await productsPage.clickContinueShopping(); 
     await productsPage.navigateToCart();
